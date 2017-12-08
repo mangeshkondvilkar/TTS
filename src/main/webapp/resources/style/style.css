@@ -1,0 +1,306 @@
+@import url("https://fonts.googleapis.com/css?family=Open+Sans:400,600,700");
+@import url("https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css");
+*, *:before, *:after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: 'Muli';font-size: 13px;
+  color: black;
+  background: #fff;
+}
+
+h1 {
+  padding-top: 60px;
+}
+
+h1.numberPin {
+  padding-bottom: 25px;
+  padding-top: 8px !important;
+}
+
+p {
+  line-height: 1.5;
+  font-size: 12px;
+}
+
+p.languageHeader {
+	padding-bottom: 15px;
+    padding-top: 10px;
+}
+
+p.header {
+   padding: 10px 0px 80px 0px;
+}
+
+p.uniquePin {
+   padding: 0px 0px 0px 0px;
+   font-size: 12px;
+}
+
+main {
+  background: #fff;
+  height:100%;
+}
+
+.mainDiv{
+	padding: 0px 50px;
+}
+
+.pageDiv{
+	height:100%;
+}
+
+section {
+  display: none;
+  padding: 100px 0 0;
+  border-top: 2px solid #ddd;
+}
+
+input {
+  display: inline-block;
+}
+
+label {
+  display: inline-block;
+  margin: 0 0 -1px;
+  padding: 15px 25px;
+  font-weight: 600;
+  text-align: center;
+  color: #bbb;
+  border: 1px solid transparent;
+}
+
+label:before {
+  font-family: fontawesome;
+  font-weight: normal;
+  margin-right: 10px;
+}
+
+label[for*='1']:before {
+  content: '\f1cb';
+}
+
+label[for*='2']:before {
+  content: '\f17d';
+}
+
+label[for*='3']:before {
+  content: '\f16b';
+}
+
+label[for*='4']:before {
+  content: '\f1a9';
+}
+
+label:hover {
+  color: #888;
+  cursor: pointer;
+}
+
+input:checked + label {
+  color: #555;
+  border: 1px solid #ddd;
+  border-top: 2px solid orange;
+  border-bottom: 1px solid #fff;
+}
+
+#tab1:checked ~ #content1,
+#tab2:checked ~ #content2,
+#tab3:checked ~ #content3 {
+  display: block;
+}
+
+@media screen and (max-width: 650px) {
+  label {
+    font-size: 0;
+  }
+
+  label:before {
+    margin: 0;
+    font-size: 18px;
+  }
+}
+@media screen and (max-width: 400px) {
+  label {
+    padding: 15px;
+  }
+}
+
+#content1{
+	visibility: hidden;
+	padding-bottom: 50px;
+    padding-top: 30px;
+}
+
+#listen{
+	color: #fff;
+	background: #0723FF;
+    padding-bottom: 18px;
+    padding-top: 18px;
+    border-width: 0px;
+    width: 100%;
+}
+
+#newPin{
+	color: #0723FF;
+	background: #fff;
+    padding-bottom: 18px;
+    padding-top: 18px;
+    border-width: 0px;
+    width: 100%;
+}
+
+#done{
+	color: #fff;
+	background: #0723FF;
+    padding-bottom: 18px;
+    padding-top: 18px;
+    border-width: 0px;
+    width: 100%;
+}
+
+#dialInText, #uniquePin{
+	padding-top: 8px;
+}
+
+.dd{
+   color: #000;
+   padding-bottom: 5px;
+   width: 240px !important;
+   border-bottom:solid #0723FF 1px !important;
+   border-width : 0px;
+   border : none !important;
+}
+.borderRadius {
+	border-bottom:none;
+    border-bottom: solid #0723FF 1px !important;
+    border-radius: 0 0 0px 0px !important;
+}
+
+.dd .ddTitle{
+	background:none !important;
+}
+
+.dd .ddTitle .ddTitleText {
+    padding: 5px 20px 5px 15px !important;
+}
+
+.dd .ddChild li img, .dd .ddTitle .ddTitleText img{
+	height: 30px !important;
+	width: 35px !important;
+}
+
+.dd .ddChild li{
+	text-indent: 10px;
+	padding: 8px !important;
+}
+
+.dd .ddChild li.selected{
+	text-indent: 10px;
+	font-weight: bold;
+}
+
+.dd .ddChild {
+    height: 170px !important;
+    border: none !important;
+}
+
+.dd .ddChild li:first-child{
+	visibility: hidden;
+    height: 0px;
+}
+
+.borderRadiusTp ul li:last-child{
+	border-radius: 0 0 0px 0px !important;
+	border-bottom: solid #0723FF 1px !important;
+}
+
+.borderRadiusTp{
+	border-bottom: none !important;
+}
+
+.dd .divider{
+	border: none !important;
+}
+
+.dd .ddChild li{
+	border-bottom:none !important;
+}
+
+.ddcommon .shadow{
+	-webkit-box-shadow: none !important;
+	box-shadow:none !important;
+}
+:focus {
+    outline: none !important;
+}
+.dd .ddChild li .ddlabel, .dd .ddTitle .ddlabel{
+	padding-left: 20px;
+}
+
+.dd .ddChild li.hover{
+	background-color:#E2E2E2 !important;
+	font-weight: bold;
+}
+
+img {
+  margin-right: 5px;
+  vertical-align: middle;
+  height: 25px;
+  padding-right: 15px;
+}
+
+button {
+	padding-left:10px;
+  	width: 210px;
+  	color: #0723FF;
+  	background: #fff;
+  	text-align: left;
+  	padding: 13px 10px 13px 10px;
+    border: 1px solid #0723FF;
+    text-decoration: none;
+    display: inline-block;
+}
+
+#uniquePinTable{
+	border: none;
+}
+
+.firstOption{
+	color: gray !important;
+	text-indent:-20px;
+	margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+#buttonTable{
+	width:100%;
+	position:fixed;
+	bottom: 0%;
+}
+
+.disabledSelection {
+    pointer-events: none;
+    opacity: 0.4;
+}
+
+.borderRadius .borderRadiusTp .ddArrow{
+	background:url(../images/dropdown.png) no-repeat !important;
+	background-size: 15px 15px !important;
+    width: 15px !important;
+    height: 15px !important;
+}
+
+.borderRadiusTp .borderRadiusTp .ddArrow{
+	background:url(../images/dropup.png) no-repeat !important;
+	background-size: 15px 15px !important;
+	width: 15px !important;
+    height: 15px !important;
+}
