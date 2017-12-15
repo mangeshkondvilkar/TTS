@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.privemanagers.tts.dto.MyPropertyChangeListener;
 import com.privemanagers.tts.dto.PriveTTSDaoDto;
 import com.privemanagers.tts.exception.AjaxCallException;
 import com.privemanagers.tts.exception.NoMappingFoundForISINException;
@@ -39,8 +40,9 @@ public class PriveTTSController {
 
 	@Autowired
 	private IPriveTTSService citiTTSService;
-	
+
 	private static PriveTTSDaoDto daoDto;
+	private static MyPropertyChangeListener propertyChangeListener;
 
 	private static final Logger LOGGER = Logger.getLogger(PriveTTSController.class);
 
@@ -61,6 +63,10 @@ public class PriveTTSController {
 		// Refresh PriveTTSDaoDto object for each request
 		daoDto = new PriveTTSDaoDto();
 
+		// Add property event handler related code
+		propertyChangeListener = new MyPropertyChangeListener();
+		daoDto.addPropertyChangeListener(propertyChangeListener);
+
 		// fetch twilioNo from DB and save it in modelMap to be used in View
 		String twilioNo = null;
 		twilioNo = citiTTSService.fetchTwilioNumber();
@@ -69,6 +75,8 @@ public class PriveTTSController {
 		// Add request attributes to Model to access them in View if needed
 		modelMap.addAttribute("key", key);
 		modelMap.addAttribute("isin", isin);
+
+		modelMap.addAttribute("commonDto", daoDto);
 
 		// Set ISIN to DaoDTO in order to save it in DB later
 		daoDto.setKey(key);
@@ -125,7 +133,7 @@ public class PriveTTSController {
 			// return cusex.getMessage();
 
 		} catch (Exception e) {
-			throw e;
+			throw new AjaxCallException(e.getMessage());
 		}
 
 		return String.valueOf(sessionPin);
@@ -140,8 +148,8 @@ public class PriveTTSController {
 	 * @throws Exception
 	 */
 	@RequestMapping(value = "/downloadKFS", method = RequestMethod.GET)
-	public String downloadKeyFactSheetPDF(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap)
-			throws Exception {
+	public @ResponseBody String downloadKeyFactSheetPDF(HttpServletRequest request, HttpServletResponse response,
+			ModelMap modelMap) throws Exception {
 
 		String strategyKey = daoDto.getKey();
 
@@ -151,12 +159,9 @@ public class PriveTTSController {
 		String selectedLocale = TTSLanguageEnum.getLocaleByLangValue(daoDto.getLanguage());
 		kfsFileUrl = kfsFileUrl.replace(TTSConstants.TAG_SELECTED_LOCALE, selectedLocale);
 
-		// fetch KFS pdf URL based on the session PIN
-		// String kfsFileUrl =
-		// citiTTSService.fetchKFSFileURL(daoDto.getSessionPin());
 		LOGGER.info("Downloading KFS request received for PIN:" + daoDto.getSessionPin() + ", KFS URL: " + kfsFileUrl);
 
-		return "redirect: " + kfsFileUrl;
+		return kfsFileUrl;
 	}
 
 	/**
@@ -173,20 +178,18 @@ public class PriveTTSController {
 	@ExceptionHandler(Exception.class)
 	public ModelAndView handleError(HttpServletRequest request, Exception ex) {
 
-		LOGGER.error("Error Occurred in CitiFundTTSController for request URL: " + request.getRequestURL(), ex);
+		LOGGER.error("Error Occurred in PriveTTSController for request URL: " + request.getRequestURL(), ex);
 
-		ModelAndView model = new ModelAndView();
+		ModelAndView model = new ModelAndView("error");
 		model.addObject("exception", ex);
 		model.addObject("url", request.getRequestURL());
-		model.setViewName("error");
-		ex.printStackTrace();
 		return model;
 	}
 
 	@ExceptionHandler(AjaxCallException.class)
 	public @ResponseBody String handleAjaxCallError(HttpServletRequest request, Exception ex) {
 
-		LOGGER.error("Error Occurred in CitiFundTTSController for generateAndSaveSessionPIN Ajas request: "
+		LOGGER.error("Error Occurred in PriveTTSController for generateAndSaveSessionPIN Ajax request: "
 				+ request.getRequestURL(), ex);
 
 		ModelAndView model = new ModelAndView();
@@ -194,5 +197,39 @@ public class PriveTTSController {
 		model.addObject("url", request.getRequestURL());
 		model.setViewName("error");
 		return "Error";
+	}
+
+	/**
+	 * To be called from Outside
+	 * 
+	 * @return
+	 */
+	public PriveTTSDaoDto getPriveTTSDaoDto() {
+		return daoDto;
+	}
+
+	/**
+	 * TO be called via ajax call to know when the PIn has been flushed from DB
+	 * 
+	 * @return
+	 */
+	@RequestMapping(value = "/getPinStatus", method = RequestMethod.GET)
+	public @ResponseBody String getPinChangeStatus() {
+
+		while (propertyChangeListener != null && !propertyChangeListener.isPinFlushed()) {
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+		return "OK";
 	}
 }

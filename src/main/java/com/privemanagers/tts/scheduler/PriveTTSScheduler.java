@@ -4,13 +4,10 @@
 package com.privemanagers.tts.scheduler;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -108,12 +105,11 @@ public class PriveTTSScheduler {
 	 *         daily basis. Any change in TTS content will be logged for audit
 	 *         purpose.
 	 */
-	@Scheduled(cron = "0 0/30 7-11 * * FRI")
-	// @Scheduled(cron = "0 15 16 * * FRI")
+	@Scheduled(cron = "0 59 6 * * *")
+	//@Scheduled(cron = "0 38 16 * * FRI")
 	public void pdfScrapperBatchJob() {
 
 		LOGGER.info("pdfScrapperBatchJob scheduler has been started...");
-
 		try {
 			// get all keys from DB and iterate below for each key
 			// List<String> keys = citiTTSService.fetchAllKeys();
@@ -125,7 +121,6 @@ public class PriveTTSScheduler {
 
 			// For testing
 			// String locale = "en";
-
 			for (Map<String, Object> map : keysList) {
 				// iterate for each locale for current key
 				String currentKey = String.valueOf(map.get("STRATEGY_KEY"));
@@ -137,17 +132,17 @@ public class PriveTTSScheduler {
 					try {
 						// 1. Download PDF and save it in temp folder
 						String kfsFileUrl = TTSConstants.PRODUCTION ? TTSConstants.DOWNLOAD_URL_PROD
-								: TTSConstants.DOWNLOAD_URL_DEV;
+								: (TTSConstants.UAT ? TTSConstants.DOWNLOAD_URL_UAT : TTSConstants.DOWNLOAD_URL_DEV);
 						// String kfsFileUrl = TTSConstants.DOWNLOAD_URL_PROD;
 						kfsFileUrl = kfsFileUrl.replace(TTSConstants.TAG_STRATEGY_KEY, currentKey);
 						kfsFileUrl = kfsFileUrl.replace(TTSConstants.TAG_SELECTED_LOCALE, locale);
 
 						URL url = new URL(kfsFileUrl);
 						String fileName = "/tmp/export/Download_from_url_" + count + ".pdf";
-						downloadAndSaveToPdf(url, fileName);
+						File file = new File(fileName);
+						downloadAndSaveToPdf(url, file);
 
 						// 2. Extract TTS content from PDF
-						File file = new File(fileName);
 						String keyRisks = null;
 						String ttsText = null;
 						keyRisks = PDFScraperWithPDFBox.processPdf(file, locale, currentFundName);
@@ -156,13 +151,11 @@ public class PriveTTSScheduler {
 							if ("en".equalsIgnoreCase(locale)) {
 								ttsText = "Below are the major risk factors in the Product Key Facts dated "
 										+ PDFScraperWithPDFBox.extractDate(file) + " of the " + currentFundName + ".\n"
-										+ keyRisks + TTSConstants.PLATFORM_SPECIFIC_LINE_SEPARATOR
-										+ TTSConstants.TTS_END_OF_ANNOUNCEMENT_EN;
+										+ keyRisks + TTSConstants.TTS_END_OF_ANNOUNCEMENT_EN;
 
 							} else {
 								ttsText = "下列為 " + currentFundName + " " + PDFScraperWithPDFBox.extractDateChinese(file)
 										+ " 產品資料概要中的主要風險因素披露。" + "\n" + keyRisks
-										+ TTSConstants.PLATFORM_SPECIFIC_LINE_SEPARATOR
 										+ TTSConstants.TTS_END_OF_ANNOUNCEMENT_CH;
 							}
 							// 3. Save to DB
@@ -189,25 +182,27 @@ public class PriveTTSScheduler {
 
 			LOGGER.info("end pdfScrapperBatchJob...");
 		} catch (Exception e) {
-			LOGGER.error("Exception in PDF Scrapper batch processing...Please contact support!");
+			LOGGER.error("Exception in PDF Scrapper batch processing...Please contact support! " + e.getMessage());
 			e.printStackTrace();
 		}
 	}
 
-	private void downloadAndSaveToPdf(URL url, String fileName) throws Exception {
-		byte[] ba1 = new byte[1024];
-		int baLength;
-		FileOutputStream fos = new FileOutputStream(new File(fileName));
+	private void downloadAndSaveToPdf(URL url, File file) throws Exception {
+		FileOutputStream fos = null;
 		InputStream is = null;
-		// Contacting the URL
-		LOGGER.info("Connecting to " + url.toString() + " ... ");
-		URLConnection urlConn = url.openConnection();
+		try {
+			byte[] ba1 = new byte[1024];
+			int baLength;
+			fos = new FileOutputStream(file);
+			// Contacting the URL
+			LOGGER.info("Connecting to " + url.toString() + " ... ");
+			// URLConnection urlConn = url.openConnection();
+			// Checking whether the URL contains a PDF
 
-		// Checking whether the URL contains a PDF
-		if (!urlConn.getContentType().equalsIgnoreCase("application/pdf")) {
-			LOGGER.error("FAILED...[Sorry. This is not a PDF.]\n");
-
-		} else {
+			/*
+			 * if (!("application/pdf".equals(urlConn.getContentType()))) {
+			 * LOGGER.error("FAILED...[Sorry. This is not a PDF.]\n"); } else {
+			 */
 			try {
 				// Read the PDF from the URL and save to a local
 				// file
@@ -215,21 +210,22 @@ public class PriveTTSScheduler {
 				while ((baLength = is.read(ba1)) != -1) {
 					fos.write(ba1, 0, baLength);
 				}
-
 				fos.flush();
 				LOGGER.info("DONE...Processing the PDF ...\n");
 			} catch (ConnectException ce) {
-				LOGGER.error("FAILED...[" + ce.getMessage() + "]\n");
-			} catch (Exception e) {
-				LOGGER.error("FAILED...Exception in downloading PDF [" + e.getMessage() + "]\n");
-				throw e;
-			}finally {
-				if (null != fos) {
-					fos.close();
-				}
-				if (null != is) {
-					is.close();
-				}
+				LOGGER.error("FAILED...ConnectException [" + ce.getMessage() + "]\n");
+				throw ce;
+			}
+			// }
+		} catch (Exception e) {
+			LOGGER.error("FAILED...Exception in downloading PDF [" + e.getMessage() + "]\n");
+			throw e;
+		} finally {
+			if (null != fos) {
+				fos.close();
+			}
+			if (null != is) {
+				is.close();
 			}
 		}
 	}

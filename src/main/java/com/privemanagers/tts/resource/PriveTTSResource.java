@@ -3,6 +3,11 @@
  */
 package com.privemanagers.tts.resource;
 
+import java.io.BufferedReader;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
@@ -11,6 +16,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -20,8 +26,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.privemanagers.tts.controller.PriveTTSController;
 import com.privemanagers.tts.dto.TwilioDaoDto;
 import com.privemanagers.tts.dto.TwilioErrorResponse;
+import com.privemanagers.tts.dto.TwilioPauseTag;
 import com.privemanagers.tts.dto.TwilioResponse;
-import com.privemanagers.tts.dto.TwilioSayResponse;
+import com.privemanagers.tts.dto.TwilioSayTag;
+import com.privemanagers.tts.dto.XmlObjectFactory;
 import com.privemanagers.tts.service.IPriveTTSService;
 
 /**
@@ -34,6 +42,12 @@ public class PriveTTSResource {
 
 	@Autowired
 	private IPriveTTSService citiTTSService;
+
+	@Autowired
+	private XmlObjectFactory xmlObjectFactory;
+	
+	@Autowired
+	private PriveTTSController priveTTSController;
 
 	private static final Logger LOGGER = Logger.getLogger(PriveTTSController.class);
 
@@ -49,7 +63,8 @@ public class PriveTTSResource {
 	 * @throws Exception
 	 */
 	@RequestMapping(value = "/getTtsResponse", method = RequestMethod.GET, produces = MediaType.APPLICATION_XML_VALUE)
-	public @ResponseBody TwilioResponse handleTwilioRequest(HttpServletRequest request) throws Exception {
+	public @ResponseBody TwilioResponse handleTwilioRequest(HttpServletRequest request, ModelMap twilioModelMap)
+			throws Exception {
 
 		LOGGER.info("Twilio request is received for PIN => " + request.getParameter("Digits"));
 
@@ -60,53 +75,100 @@ public class PriveTTSResource {
 			twilioDaoDto = citiTTSService.fetchDataForTwilio(Integer.parseInt(pin));
 
 		} catch (NumberFormatException e) {
-			System.out.println("NumberFormatException...");
-			final TwilioSayResponse sayResponse = new TwilioSayResponse();
-			sayResponse.setVoice("alice");
-			sayResponse.setLanguage("en");
-			sayResponse.setContent("Please enter correct PIN");
+			LOGGER.error("NumberFormatException in handleTwilioRequest...");
+
+			final List<Object> xmlElementList = new ArrayList<Object>();
+
+			final TwilioSayTag sayTag = new TwilioSayTag();
+			sayTag.setVoice("alice");
+			sayTag.setLanguage("en");
+			sayTag.setContent("Please enter correct PIN");
+			xmlElementList.add(xmlObjectFactory.createSayTag(sayTag));
+
+			final TwilioPauseTag pauseTag = new TwilioPauseTag();
+			pauseTag.setLength("2");
+			xmlElementList.add(xmlObjectFactory.createPauseTag(pauseTag));
 
 			final TwilioResponse twilioResponse = new TwilioResponse();
-			// twilioResponse.setId(Integer.parseInt(pin));
-			twilioResponse.setSay(sayResponse);
+			twilioResponse.setObject(xmlElementList);
+
 			return twilioResponse;
 		} catch (EmptyResultDataAccessException e) {
-			System.out.println("EmptyResultDataAccessException...");
-			final TwilioSayResponse sayResponse = new TwilioSayResponse();
-			sayResponse.setVoice("alice");
-			sayResponse.setLanguage("en");
-			sayResponse.setContent(
+			LOGGER.error("EmptyResultDataAccessException in handleTwilioRequest...");
+
+			final List<Object> xmlElementList = new ArrayList<Object>();
+
+			final TwilioSayTag sayTag = new TwilioSayTag();
+			sayTag.setVoice("alice");
+			sayTag.setLanguage("en");
+			sayTag.setContent(
 					"Your PIN has not been found in Prive system. Please either enter a correct PIN or generate a new PIN and try again.");
+			xmlElementList.add(xmlObjectFactory.createSayTag(sayTag));
+
+			final TwilioPauseTag pauseTag = new TwilioPauseTag();
+			pauseTag.setLength("2");
+			xmlElementList.add(xmlObjectFactory.createPauseTag(pauseTag));
 
 			final TwilioResponse twilioResponse = new TwilioResponse();
-			// twilioResponse.setId(Integer.parseInt(pin));
-			twilioResponse.setSay(sayResponse);
+			twilioResponse.setObject(xmlElementList);
+
 			return twilioResponse;
 		}
 
 		twilioDaoDto.setSessionPin(Integer.parseInt(pin));
 		twilioDaoDto.setCallerMobileNo(request.getParameter("Caller"));
 
-		// LOGGER.info("ttsText from DB: => " + twilioDaoDto.getTtsText());
-
-		final TwilioSayResponse sayResponse = new TwilioSayResponse();
-		sayResponse.setVoice("alice");
-		sayResponse.setLanguage(twilioDaoDto.getLanguage());
+		final TwilioResponse twilioResponse = new TwilioResponse();
+		final List<Object> xmlElementList = new ArrayList<Object>();
 
 		String content = twilioDaoDto.getTtsText();
-		if (null != content) {
-			sayResponse.setContent(content);
-		} else {
-			sayResponse.setContent(
-					"Sorry no information found in Prive system related to your fund in selected language.");
-			sayResponse.setLanguage("en");
-		}
 
-		final TwilioResponse twilioResponse = new TwilioResponse();
-		twilioResponse.setSay(sayResponse);
+		if (null != content && !"".equalsIgnoreCase(content)) {
+			content = content.replaceAll("\\.", "....");
+			// Read line by line --> form a <Say> tag for each line --> add a
+			// pause.
+			BufferedReader br = new BufferedReader(new StringReader(content));
+			String line = null;
+
+			while (null != (line = br.readLine())) {
+				if (line.length() > 0) {
+
+					final TwilioSayTag say = new TwilioSayTag();
+					say.setVoice("alice");
+					say.setLanguage(twilioDaoDto.getLanguage());
+					say.setContent(line);
+					xmlElementList.add(xmlObjectFactory.createSayTag(say));
+
+					// Add pause of 1 seconds
+					final TwilioPauseTag pause = new TwilioPauseTag();
+					pause.setLength("2");
+					xmlElementList.add(xmlObjectFactory.createPauseTag(pause));
+				}
+			}
+
+			twilioResponse.setObject(xmlElementList);
+		} else {
+			LOGGER.info("Sorry no information found in Prive system related to your fund in selected language....");
+
+			final List<Object> xmlElementListError = new ArrayList<Object>();
+			final TwilioSayTag say = new TwilioSayTag();
+			say.setVoice("alice");
+			say.setLanguage("en");
+			say.setContent("Sorry no information found in Prive system related to your fund in selected language.");
+			xmlElementListError.add(xmlObjectFactory.createSayTag(say));
+
+			// Add pause of 1 seconds
+			final TwilioPauseTag pause = new TwilioPauseTag();
+			pause.setLength("2");
+			xmlElementListError.add(xmlObjectFactory.createPauseTag(pause));
+
+			twilioResponse.setObject(xmlElementListError);
+		}
 
 		// Flush the corresponding PIN from DB.
 		citiTTSService.removeSessionPin(pin);
+		//
+		priveTTSController.getPriveTTSDaoDto().setSessionPin(0);
 
 		// Update Audit log table
 		citiTTSService.updateAuditLog(twilioDaoDto);
@@ -131,7 +193,7 @@ public class PriveTTSResource {
 		LOGGER.error("Error Occurred in Twilio request processing for URL: " + request.getRequestURL(), ex);
 
 		TwilioErrorResponse errorResponse = new TwilioErrorResponse();
-		TwilioSayResponse sayResponse = new TwilioSayResponse();
+		TwilioSayTag sayResponse = new TwilioSayTag();
 		// sayResponse.setLanguage("US_en");
 		sayResponse.setVoice("alice");
 		sayResponse.setContent("There is an error processing your request. Please try again. " + ex.getMessage());

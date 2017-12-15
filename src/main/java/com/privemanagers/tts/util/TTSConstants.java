@@ -62,9 +62,13 @@ public interface TTSConstants {
 			&& System.getenv("PRODUCTION").equals("true"))
 			|| (System.getProperty("PRODUCTION") != null && System.getProperty("PRODUCTION").equals("true"));
 
+	public final static boolean UAT = (System.getenv("UAT") != null && System.getenv("UAT").equals("true"))
+			|| (System.getProperty("UAT") != null && System.getProperty("UAT").equals("true"));
+
 	public static final String DOWNLOAD_URL_PROD = "https://www.privemanagers.com/DownloadFundFactsheet?locale=[selected-locale]&country=HKG&strategykey=[strategy-key]&type=10&token=MaVkx3qyCE9uRgqzRp527PsUZhsjdf";
 
-	public static final String DOWNLOAD_URL_DEV = "http://192.168.1.107:8080/SlyAWS/DownloadFundFactsheet?locale=[selected-locale]&country=HKG&strategykey=[strategy-key]&type=10&token=MaVkx3qyCE9uRgqzRp527PsUZhsjdf";
+	public static final String DOWNLOAD_URL_UAT = "https://citiuat.privemanagers.com/DownloadFundFactsheet?locale=[selected-locale]&country=HKG&strategykey=[strategy-key]&type=10&token=mX8PSEBg42WR48auyGdTNH38WErbZ3";
 
+	public static final String DOWNLOAD_URL_DEV = "http://192.168.1.107:8080/SlyAWS/DownloadFundFactsheet?locale=[selected-locale]&country=HKG&strategykey=[strategy-key]&type=10&token=MaVkx3qyCE9uRgqzRp527PsUZhsjdf";
 
 }

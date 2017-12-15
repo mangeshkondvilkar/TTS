@@ -32,7 +32,8 @@ public class MyPDFTextStripper2 extends PDFTextStripper {
 				|| textPosition.getFont().getBaseFont().contains("bol")
 				|| textPosition.getFont().getBaseFont().contains("Pro-Regular")
 				|| textPosition.getFont().getBaseFont().contains("Amplitude-Medium")
-				|| textPosition.getFont().getBaseFont().contains("PMingLiU")) {
+				|| textPosition.getFont().getBaseFont().contains("PMingLiU")
+				|| textPosition.getFont().getBaseFont().contains("MingLiU")) {
 			super.processTextPosition(textPosition);
 		} else {
 			// System.out.println(textPosition.getFont().getBaseFont());

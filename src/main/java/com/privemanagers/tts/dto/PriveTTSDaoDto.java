@@ -3,17 +3,18 @@
  */
 package com.privemanagers.tts.dto;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.Serializable;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+import org.apache.log4j.Logger;
+
+import com.privemanagers.tts.controller.PriveTTSController;
 
 /**
  * @author Mangesh K
  *
  */
-@Component
-@Scope("prototype")
 public class PriveTTSDaoDto implements Serializable {
 
 	/**
@@ -21,13 +22,20 @@ public class PriveTTSDaoDto implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private String key; 
+	private String key;
 	private String isin;
 	private String strategyKey;
 
 	private String language;
 	private int sessionPin;
 	private String ttsText;
+
+	// For propertyChange event handling
+	private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+
+	public PriveTTSDaoDto() {
+		super();
+	}
 
 	public String getKey() {
 		return key;
@@ -66,6 +74,7 @@ public class PriveTTSDaoDto implements Serializable {
 	}
 
 	public void setSessionPin(int sessionPin) {
+		propertyChangeSupport.firePropertyChange("sessionPin", this.sessionPin, sessionPin);
 		this.sessionPin = sessionPin;
 	}
 
@@ -75,6 +84,14 @@ public class PriveTTSDaoDto implements Serializable {
 
 	public void setTtsText(String ttsText) {
 		this.ttsText = ttsText;
+	}
+
+	/**
+	 * 
+	 * @param listener
+	 */
+	public void addPropertyChangeListener(PropertyChangeListener listener) {
+		propertyChangeSupport.addPropertyChangeListener(listener);
 	}
 
 }

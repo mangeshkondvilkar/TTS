@@ -22,9 +22,9 @@ import org.apache.pdfbox.util.PDFTextStripper;
  * @author Mangesh K
  *
  */
-public class PDFScraperWithPDFBox {
+public class PDFScraperWithPDFBoxTest {
 
-	private static final Logger LOGGER = Logger.getLogger(PDFScraperWithPDFBox.class);
+	private static final Logger LOGGER = Logger.getLogger(PDFScraperWithPDFBoxTest.class);
 
 	/**
 	 * @param args
@@ -33,14 +33,16 @@ public class PDFScraperWithPDFBox {
 
 	public static void main(String[] args) throws Exception {
 
-		final File folder = new File("/home/mkondvilkar/prive-jira/Citi-New/scrapper/kfs_pdfs/new_pdfs");
-
+		final File folder = new File("/home/mkondvilkar/prive-jira/Citi-New/scrapper/kfs_pdfs/en_pdfs");
+		int count = 1;
 		if (folder.isDirectory()) {
 			List<File> files = Arrays.asList(folder.listFiles());
 
 			for (File file : files) {
 				if (file.isFile()) {
-					processPdf(file, "en");
+					System.out.println(count+" ----------------------------------------------------------------------------------------");
+					System.out.println(processPdf(file, "en"));
+					count++;
 				}
 			}
 		}
@@ -187,7 +189,6 @@ public class PDFScraperWithPDFBox {
 				if (startsWithNumber && !line.matches("[0-9].*")) {
 					continue;
 				}
-
 				// sb.append(line.replaceAll("[^A-Za-z0-9\\. ]", "") + ".\n");
 				sb.append(line.replaceAll("[^A-Za-z0-9\\\\/\\-.,()\\“\\” ]", "") + ".\n"); // new
 			}
@@ -262,7 +263,7 @@ public class PDFScraperWithPDFBox {
 		try {
 			// load pdf
 			doc = PDDocument.load(file);
-			PDFTextStripper stripper = new PDFTextStripper("UTF-8");
+			MyPDFTextStripper2 stripper = new MyPDFTextStripper2("UTF-8");
 			stripper.setStartPage(0);
 			stripper.setEndPage(doc.getNumberOfPages());
 			byte[] txts = stripper.getText(doc).getBytes("UTF-8");
@@ -288,24 +289,13 @@ public class PDFScraperWithPDFBox {
 			String line = null;
 			StringBuilder sb = new StringBuilder();
 			boolean startsWithNumber = false;
-			int temp = 0, temp1 = 0;
+			int temp = 0;
 			int lineNo = 1;
-			String prevLine = "";
 			while ((line = reader.readLine()) != null) {
 				line = line.trim();
-
-				if (line.length() > 40) {
-					continue;
-				}
 				// skip the introductory content before risks content starts
 				// e.g skip - "Investment involves risks. Please refer to the
 				// offering document for details including the risk factors."
-				/*
-				 * if (line.equals("？") || line.equals("") || line == null ||
-				 * line.contains("，") || line.contains("；") ||
-				 * line.contains("－") || line.contains("（") ||
-				 * line.contains("）")) { continue; }
-				 */
 				if (line.equals("？") || line.equals("") || line == null || line.contains("，") || line.contains("；")
 						|| line.contains("－")) {
 					continue;
@@ -319,26 +309,13 @@ public class PDFScraperWithPDFBox {
 					continue;
 				}
 
-				if (temp == 0 && line.matches("[0-9][.].*")) {
+				if (temp == 0 && line.matches("[0-9].*")) {
 					// headers starts with number
 					startsWithNumber = true;
 					temp++;
 				}
 
-				// If the line contains only numbers(e.g. page number) then
-				// ignore
-				try {
-					String tmpStr = line.replaceAll("\\s+", "").replaceAll("\\/", "");
-					int num = Integer.parseInt(tmpStr);
-					continue;
-				} catch (Exception e) {
-				}
-
 				if (!startsWithNumber) {
-					if (temp1 == 0 && sb.length() > 0) {
-						prevLine = line;
-						temp1++;
-					}
 					line = String.valueOf(lineNo) + ". " + line;
 					lineNo++;
 				}
@@ -348,19 +325,11 @@ public class PDFScraperWithPDFBox {
 				if (startsWithNumber && !line.matches("[0-9].*")) {
 					continue;
 				}
-
-				if (!prevLine.contains("") && line.contains("")) {
-					continue;
-				}
-
 				line = line.replace("•", "").trim();
 				line = line.replace("·", "").trim();
 				line = line.replace("：", "").trim();
 				line = line.replace(":", "").trim();
-
-				if (line.length() > 0) {
-					sb.append(line + ".\n");
-				}
+				sb.append(line + ".\n");
 				// sb.append(line.replaceAll("[^A-Za-z0-9\\. ]", "") + ".\n");
 			}
 

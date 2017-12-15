@@ -148,7 +148,7 @@ input:checked + label {
     width: 100%;
 }
 
-#newPin{
+#done{
 	color: #0723FF;
 	background: #fff;
     padding-bottom: 18px;
@@ -157,7 +157,7 @@ input:checked + label {
     width: 100%;
 }
 
-#done{
+#newPin{
 	color: #fff;
 	background: #0723FF;
     padding-bottom: 18px;

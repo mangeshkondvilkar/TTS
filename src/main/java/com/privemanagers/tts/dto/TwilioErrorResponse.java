@@ -17,13 +17,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class TwilioErrorResponse {
 
 	@XmlElement(name="Say")
-	private TwilioSayResponse say;
+	private TwilioSayTag say;
 
-	public TwilioSayResponse getSay() {
+	public TwilioSayTag getSay() {
 		return say;
 	}
 
-	public void setSay(TwilioSayResponse say) {
+	public void setSay(TwilioSayTag say) {
 		this.say = say;
 	}
 

@@ -47,6 +47,8 @@ console.log('DEBUG ISIN OUT : '+ '${isin}');
 				console.log(errorThrown);
 			}
 		});
+		
+		checkPinStatus();
 	}
 
 	function callController2(divId, lang){
@@ -69,7 +71,22 @@ console.log('DEBUG ISIN OUT : '+ '${isin}');
 			key = '${isin}';
 		}
 		console.log('DEBUG KEY for Download KFS: '+ key);
-		location.href='privetts/downloadKFS';
+		//To avoid popup-blocker - open a blank window first and then redirect KFS URL to it.
+		var downloadKfsWindow = window.open('', 'DownloadKFS');
+
+		$.ajax({
+			type : 'GET',
+			url : "privetts/downloadKFS",
+			dataType : 'text',
+			success : function(data, status) {
+				console.log('Downloading KFS URL: '+data);
+				downloadKfsWindow.location.href=data;
+			},
+			error : function(status, errorThrown) {
+				console.log(status);
+				console.log(errorThrown);
+			}
+		});
 	}
 
 	function languageChange(){
@@ -111,23 +128,23 @@ console.log('DEBUG ISIN OUT : '+ '${isin}');
 		newPin.setAttribute("value", "Generate a new Pin");
 		newPin.setAttribute("onclick", "generateNewPin()");
 
-        var done = document.createElement("input");
+      /*   var done = document.createElement("input");
         done.setAttribute("type", "button");
         done.setAttribute("id", "done");
         done.setAttribute("value", "I'm done");
-        done.setAttribute("onclick", "processDone()");
+        done.setAttribute("onclick", "processDone()"); */
 
         var table = document.getElementById("buttonTable");
         table.deleteRow(0);
         var row = table.insertRow(0);
 
-        var cell1 = row.insertCell(0);
+        /* var cell1 = row.insertCell(0);
         cell1.appendChild(done);
         cell1.style.width = '50%';
-
-        var cell2 = row.insertCell(1);
+ */
+        var cell2 = row.insertCell(0);
         cell2.appendChild(newPin);
-        cell2.style.width = '50%';
+        cell2.style.width = '100%';
 	}
 
 	function generateNewPin(){
@@ -139,6 +156,27 @@ console.log('DEBUG ISIN OUT : '+ '${isin}');
 	function processDone(){
 		generateNewPin();
 	}
+	
+	function checkPinStatus(){
+		$.ajax({
+			type : 'GET',
+			url : 'privetts/getPinStatus',
+			dataType : 'text',
+			success : function(data, status) {
+				console.log('Called async controller getPinStatus: ');
+				if(data == 'OK'){
+					console.log('PIN IS REMOVED FROM PRIVE DB '+status);
+					divId = document.getElementById("pinText1");
+					divId.style='color:red;text-decoration:line-through';
+				}
+			},
+			error : function(status, errorThrown) {
+				console.log(status);
+				console.log(errorThrown);
+			}
+		});
+	}
+	
 </script>
 </head>
 <body>

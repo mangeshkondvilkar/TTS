@@ -4,11 +4,13 @@
 package com.privemanagers.tts.dto;
 
 import java.io.Serializable;
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlSeeAlso;
 
 /**
  * @author Mangesh K
@@ -16,37 +18,23 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement(name = "Response")
 @XmlAccessorType(XmlAccessType.FIELD)
+@XmlSeeAlso({ TwilioSayTag.class, TwilioPauseTag.class })
 public class TwilioResponse implements Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-/*
-	@XmlElement(name = "Pin", required = true, nillable = true)
-	private int id;
-*/
-	@XmlElement(name = "Say", required = true, nillable = true)
-	private TwilioSayResponse say;
 
-/*	public int getId() {
-		return id;
+	@XmlAnyElement(lax = true)
+	private List<Object> object;
+
+	public List<Object> getObject() {
+		return object;
 	}
 
-	public void setId(int id) {
-		this.id = id;
-	}
-*/
-	public TwilioSayResponse getSay() {
-		return say;
-	}
-
-	public void setSay(TwilioSayResponse say) {
-		this.say = say;
-	}
-
-	public static long getSerialversionuid() {
-		return serialVersionUID;
+	public void setObject(List<Object> object) {
+		this.object = object;
 	}
 
 }
